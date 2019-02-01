@@ -1,3 +1,4 @@
+
 angular.module('myApp.controllers').controller('teacherCtrl',
     ['$rootScope','$scope', '$http', '$window', '$log',
         function ($rootScope, $scope, $http, $window, $log) {
@@ -5,7 +6,11 @@ angular.module('myApp.controllers').controller('teacherCtrl',
             console.log('Loading `dochody` controller');
             $scope.M = {};
             $scope.wynik = [];
+            $scope.testAlias = 'dd';
+            $scope.tablica = [1, 2, 3, 4, 5];
+
             const URL = "http://basra.wsi.edu.pl:1111";
+
 
             $scope.test = {};
 
@@ -19,76 +24,34 @@ angular.module('myApp.controllers').controller('teacherCtrl',
 
             /////////////////////////////////////////////////////////////
 
-            //Filtruje tablicę dochodów tak by pozostali tylko gracze o dochodach między low i high
-            //zwraca przefiltrowaną tablicę
-            let filterIncomesRange = function (incomes, low, high) {
-                console.log('Filtrowanie po range low=' + low + ' high=' + high);
-                let wyfiltrowane = [];
-                for (let player of incomes) {
-                    if (player.dochod >= low && player.dochod <= high) {
-                        wyfiltrowane.push(player);
-                    }
-                }
-                return wyfiltrowane;
-            };
 
-            //Filtruje tablicę dochodów tak by pozostali tylko gracze o peselach zaczynających się na `prez
-            let filterIncomesPesel = function (incomes, pre) {
-                console.log('Filtrowanie po peselu; szukany prefix=' + pre);
-                let wyfiltrowane = [];
-                for (let player of incomes) {
-                    if (player.pesel.startsWith(pre)) {
-                        wyfiltrowane.push(player);
-                    }
-                }
-                return wyfiltrowane;
-            };
-
-
-            //funkcja biorąca tablicę 'obiektów dochodowych', i filtrująca: od dołu, góry i po peselu
-            $scope.filterIncomes = function (incomes) {
-                console.log('filtruję tablicę' + JSON.stringify(incomes));
-                let filterLow = true;
-                let filterHi = true;
-                let filterPesel = true;
-
-                if (filterLow) {
-                    incomes = filterIncomesRange(incomes, $scope.iLow, $scope.iHigh);
-                }
-                console.log('Wyfiltrowane:' + JSON.stringify(incomes));
-
-                if (filterPesel) {
-                    incomes = filterIncomesPesel(incomes, $scope.iPesel);
-                }
-                console.log('Wyfiltrowane:' + JSON.stringify(incomes));
-                $scope.wynik = incomes;
-            };
-
-
-
-            $scope.wyszukaj = function () {
-                $scope.wynik = [];
-                for (let player of $scope.dane) {
-                    if ($scope.iLow !== undefined) {    //sprawdzenie czy coś zostało wpisane w pole iLow na UI
-                        if (player.dochod >= $scope.iLow) {
-                            $scope.wynik.push(player);
-                        }
-                    }
-                }
-            };
-
-            //wyszukać po peselu (pesel zaczyna się od...)
-
-            let solve2 = function (arr) {
-                let g = "ga";
-                if (g.startsWith("g")) {
-                    console.log("OK");
-                }
-
-            };
 
             $scope.addQuestion = function () {
                 $scope.test.items.push({"from": "", "to": ""});
+            };
+
+            let randomIndex = function (max) {
+                return Math.floor(Math.random() * max);
+            };
+
+            $scope.shuffleTable = function (arr) {
+                const n = arr.length;
+                console.log('before: ' + arr);
+                for (let i = 0; i < 100; i++) {
+                    const from = randomIndex(n);
+                    const to = randomIndex(n);
+                    console.log('from:' + from + ' to:' + to);
+                    const t = arr[from];
+                    arr[from] = arr[to];
+                    arr[to] = t;
+                }
+                console.log('after: ' + arr);
+            };
+
+            $scope.deleteQuestion = function (qu) {
+                let idx = $scope.test.items.indexOf(qu);
+                console.log('Removing question at index:' + idx);
+                $scope.test.items.splice(idx,1);
             };
 
             $scope.loadTest = function () {
@@ -96,7 +59,7 @@ angular.module('myApp.controllers').controller('teacherCtrl',
                     url: URL + '/tests',
                     method: 'GET',
                     params: {
-                        alias: "dd"
+                        alias: $scope.testAlias
                     }
                 }).success(function (dane) {
                     $scope.test = dane;
@@ -104,18 +67,14 @@ angular.module('myApp.controllers').controller('teacherCtrl',
             };
 
 
-            $scope.saveTest = function(test) {
+            $scope.saveTest = function() {
+                const test = $scope.test;
                 $http({
-                    url: $rootScope.DATA + '/groups',
+                    url: URL + '/tests',
                     method: 'POST',
-                    data: JSON.stringify(g),
-                    params: {
-                        wdauth: $rootScope.R.wdauth
-                    }
+                    data: JSON.stringify(test)
                 }).success(function(data){
-                    $scope.tube('Grupa została utworzona');
-                    $scope.loadGroups();
-                    $scope.M.sGroup = undefined;
+                    console.log('Zapisano test: ' + JSON.stringify(test));
                 });
 
             }
